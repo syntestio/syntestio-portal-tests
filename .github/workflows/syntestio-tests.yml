@@ -1,0 +1,66 @@
+name: Run Syntestio Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      test_tags:
+        description: 'Test tags to run (comma-separated)'
+        required: false
+        default: ''
+
+jobs:
+  prepare-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Process Secrets File
+        run: |
+          # Create the secrets feature file with GitHub secrets
+          cat > tests/secrets.feature << EOF
+          @var* userEmail = ${{ secrets.USER_EMAIL }}
+          @var* password = ${{ secrets.PASSWORD }}
+          @var* anotherUserEmail = ${{ secrets.ANOTHER_USER_EMAIL }}
+          EOF
+
+          # Update config file with API key
+          cat > config.json << EOF
+          {
+            "apiKey": "${{ secrets.SYNTESTIO_API_KEY }}",
+            "appUrl": "https://syntestio.com",
+            "scenarioFileDirs": ["tests"],
+            "isDebug": false,
+            "tags": [],
+            "saveResult": true,
+            "headless": true,
+          }
+          EOF
+        shell: bash
+
+      - name: Upload Processed Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-files
+          path: |
+            tests/secrets.feature
+            tests/runtime-config.json
+
+  run-tests:
+    needs: prepare-secrets
+    uses: ./.github/workflows/syntestio-github-test-execution-template.yml
+    with:
+      testConfigFile: 'tests/runtime-config.json'
+      os: 'linux'
+      cliArguments: '--headless'
+      testResultsDir: 'test-results'
+      continueOnError: true

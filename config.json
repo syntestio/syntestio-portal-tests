@@ -1,0 +1,11 @@
+{
+    "apiKey": "d47d5d3f8a574aa7a3ef1f45d2760cc6db405fd41ba04eba",
+    "appUrl": "https://syntestio.com",
+    "scenarioFileDirs": [
+      "tests"
+    ],
+    "isDebug": false,
+    "headless": true,
+    "saveResult": true,
+    "tags": []
+  }

@@ -1,0 +1,80 @@
+name: Syntestio Test Execution Template
+
+on:
+  workflow_call:
+    inputs:
+      testConfigFile:
+        required: true
+        type: string
+        description: 'Path to the Syntestio test configuration file'
+      testResultsDir:
+        required: false
+        type: string
+        default: 'syntestio-test-results'
+        description: 'Directory where test results will be stored'
+      os:
+        required: true
+        type: string
+        default: 'linux'
+        description: 'OS to run tests on (win, linux, macos)'
+      runner:
+        required: false
+        type: string
+        description: 'GitHub runner to use for running the tests'
+      cliArguments:
+        required: false
+        type: string
+        default: '--headless'
+        description: 'Additional command line arguments to pass to the Syntestio CLI'
+      continueOnError:
+        required: false
+        type: boolean
+        default: true
+        description: 'Whether to continue workflow execution if tests fail'
+
+jobs:
+  run-syntestio-tests:
+    name: Run Syntestio Tests
+    runs-on: ${{ inputs.runner || format('{0}-latest', inputs.os == 'win' && 'windows' || inputs.os == 'macos' && 'macos' || 'ubuntu') }}
+    continue-on-error: ${{ inputs.continueOnError }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Download Test Files
+        uses: actions/download-artifact@v3
+        with:
+          name: test-files
+          path: tests
+
+      - name: Install Syntestio CLI
+        run: |
+          if [ "${{ inputs.os }}" == "win" ]; then
+            npm install -g @syntestio/cli-win
+          elif [ "${{ inputs.os }}" == "macos" ]; then
+            npm install -g @syntestio/cli-mac
+          else
+            npm install -g @syntestio/cli-linux
+          fi
+        shell: bash
+
+      - name: Create Results Directory
+        run: mkdir -p ${{ inputs.testResultsDir }}
+        shell: bash
+
+      - name: Run Syntestio Tests
+        run: syntestio run --config-file ${{ inputs.testConfigFile }} --results-dir ${{ inputs.testResultsDir }} ${{ inputs.cliArguments }}
+        shell: bash
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: syntestio-test-reports
+          path: ${{ inputs.testResultsDir }}
