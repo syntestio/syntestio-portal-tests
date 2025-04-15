@@ -48,7 +48,7 @@ jobs:
           node-version: '18'
 
       - name: Download Test Files
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-files
           path: tests
@@ -74,7 +74,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: syntestio-test-reports
           path: ${{ inputs.testResultsDir }}
