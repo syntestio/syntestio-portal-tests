@@ -22,11 +22,11 @@ Scenario: Unsuccessful login
 @register
 Scenario: Register new user and then remove account
   When I navigate to login page
-  And I create account with email &newRegisteredAccountEmail and password '&password' until I see select tier page (using the visible Submit button, not the aria-hidden one)
+  And I click on sign up and create account with email &newRegisteredAccountEmail and password &password until I see select tier page (using the visible Submit button, not the aria-hidden one)
   Then I should see tiers page
   When I select free tier
   Then I should see dashboard page
   When I navigate to profile settings from account menu (top right corner in header)
   And I Delete my account (until I am on login page)
-  Then I try to login with credentials '&newRegisteredAccountEmail' and password '&password' (using the visible Submit button, not the aria-hidden one) until I can see error login message
+  Then I try to login with credentials &newRegisteredAccountEmail and password &password (using the visible Submit button, not the aria-hidden one) until I can see error login message
   Then I should see login error message

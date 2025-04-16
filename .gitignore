@@ -21,7 +21,6 @@ out/
 tests/secrets.local.feature
 test-results/
 syntestio-test-results/
-runtime-config.json
 
 # IDE and editor files
 .idea/
@@ -30,3 +29,6 @@ runtime-config.json
 *.swo
 .DS_Store
 Thumbs.db 
+
+# All local files
+*.local
