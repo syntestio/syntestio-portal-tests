@@ -84,9 +84,9 @@ jobs:
           # Create secrets.feature file
           mkdir -p tests
           cat > tests/secrets.feature << EOF
-          @var userEmail = $USER_EMAIL
-          @var password = $PASSWORD
-          @var anotherUserEmail = $ANOTHER_USER_EMAIL
+          @var* userEmail = $USER_EMAIL
+          @var* password = $PASSWORD
+          @var* anotherUserEmail = $ANOTHER_USER_EMAIL
           EOF
 
           # Create config with API key
@@ -103,7 +103,7 @@ jobs:
           EOF
 
           # Run tests and capture output
-          syn --config "config.json" ${{ inputs.cliArguments }} 2>&1 | tee syntestio_test_output.log
+          syn --config "${{ github.workspace }}/${{ inputs.testConfigFile }}" ${{ inputs.cliArguments }} 2>&1 | tee syntestio_test_output.log
           TEST_EXIT_CODE=${PIPESTATUS[0]}
 
           echo "Test execution completed with exit code: $TEST_EXIT_CODE"
