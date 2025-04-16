@@ -26,6 +26,15 @@ on:
         required: false
         type: boolean
         default: true
+    secrets:
+      USER_EMAIL:
+        required: true
+      PASSWORD:
+        required: true
+      ANOTHER_USER_EMAIL:
+        required: true
+      SYNTESTIO_API_KEY:
+        required: true
 
 jobs:
   run-tests:
@@ -60,6 +69,11 @@ jobs:
 
       - name: Run test scenario
         continue-on-error: ${{ inputs.continueOnError }}
+        env:
+          USER_EMAIL: ${{ secrets.USER_EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          ANOTHER_USER_EMAIL: ${{ secrets.ANOTHER_USER_EMAIL }}
+          SYNTESTIO_API_KEY: ${{ secrets.SYNTESTIO_API_KEY }}
         run: |
           # Set UTF-8 encoding
           export LANG=en_US.UTF-8
@@ -67,8 +81,29 @@ jobs:
 
           echo "Starting test execution..."
 
+          # Create secrets.feature file
+          mkdir -p tests
+          cat > tests/secrets.feature << EOF
+          @var* userEmail = $USER_EMAIL
+          @var* password = $PASSWORD
+          @var* anotherUserEmail = $ANOTHER_USER_EMAIL
+          EOF
+
+          # Create config with API key
+          cat > config.json << EOF
+          {
+            "apiKey": "$SYNTESTIO_API_KEY",
+            "appUrl": "https://syntestio.com",
+            "scenarioFileDirs": ["tests"],
+            "isDebug": false,
+            "tags": [],
+            "saveResult": true,
+            "headless": true
+          }
+          EOF
+
           # Run tests and capture output
-          syn --config "${{ github.workspace }}/${{ inputs.testConfigFile }}" ${{ inputs.cliArguments }} 2>&1 | tee syntestio_test_output.log
+          syn --config "config.json" ${{ inputs.cliArguments }} 2>&1 | tee syntestio_test_output.log
           TEST_EXIT_CODE=${PIPESTATUS[0]}
 
           echo "Test execution completed with exit code: $TEST_EXIT_CODE"
