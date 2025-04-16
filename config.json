@@ -1,11 +1,12 @@
 {
-    "apiKey": "${{ secrets.SYNTESTIO_API_KEY }}",
+    "apiKey": "726eae49a9754d939a3df73faa0bd8819e1e41b8dbd841b1",
     "appUrl": "https://syntestio.com",
     "scenarioFileDirs": [
       "tests"
     ],
     "isDebug": false,
-    "headless": true,
+    "headless": false,
     "saveResult": true,
+    "retryWhenFail": 0,
     "tags": []
   }
