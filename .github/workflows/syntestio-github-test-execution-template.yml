@@ -67,6 +67,11 @@ jobs:
         run: |
           npm install -g @syntestio/cli-${{ inputs.os }} --verbose
 
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install chromium
+          npx playwright install-deps chromium
+
       - name: Run test scenario
         continue-on-error: ${{ inputs.continueOnError }}
         env:

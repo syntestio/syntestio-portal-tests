@@ -7,7 +7,7 @@ Feature: Project Management
 Scenario: Create new project
   Given I am logged in
   When I am on dashboard page
-  And I remove existing project if any is assigned (select in project list and go to project settings page to see remove button)
+  And I remove all existing projects if any is assigned (select in project list and go to project settings page to see remove button)
   Then I should see message about No Project Selected 
   When I create project with name &projectName and description &projectDescription
   Then I should see &projectName as my active project
