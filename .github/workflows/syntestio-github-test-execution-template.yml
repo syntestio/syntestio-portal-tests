@@ -45,7 +45,13 @@ jobs:
 
       - name: Copy test files
         run: |
-          cp ${{ inputs.testConfigFile }} ${{ github.workspace }}/
+          # Only copy the config file if it's not already in the workspace root
+          CONFIG_FILENAME=$(basename ${{ inputs.testConfigFile }})
+          if [ "${{ inputs.testConfigFile }}" != "$CONFIG_FILENAME" ]; then
+            cp ${{ inputs.testConfigFile }} ${{ github.workspace }}/
+          fi
+
+          # Copy feature files from the config directory
           cp $(dirname ${{ inputs.testConfigFile }})/**/*.feature ${{ github.workspace }}/ 2>/dev/null || true
 
       - name: Install CLI package
