@@ -53,13 +53,13 @@ jobs:
           name: test-files
           path: |
             tests/secrets.feature
-            tests/runtime-config.json
+            config.json
 
   run-tests:
     needs: prepare-secrets
     uses: ./.github/workflows/syntestio-github-test-execution-template.yml
     with:
-      testConfigFile: 'tests/runtime-config.json'
+      testConfigFile: 'config.json'
       os: 'linux'
       cliArguments: '--headless'
       testResultsDir: 'test-results'

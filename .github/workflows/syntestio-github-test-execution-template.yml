@@ -1,4 +1,4 @@
-name: Syntestio Test Execution Template
+name: Test Template
 
 on:
   workflow_call:
@@ -6,75 +6,88 @@ on:
       testConfigFile:
         required: true
         type: string
-        description: 'Path to the Syntestio test configuration file'
       testResultsDir:
         required: false
         type: string
         default: 'syntestio-test-results'
-        description: 'Directory where test results will be stored'
       os:
         required: true
         type: string
         default: 'linux'
-        description: 'OS to run tests on (win, linux, macos)'
       runner:
         required: false
         type: string
-        description: 'GitHub runner to use for running the tests'
+        default: 'ubuntu-latest'
       cliArguments:
         required: false
         type: string
         default: '--headless'
-        description: 'Additional command line arguments to pass to the Syntestio CLI'
       continueOnError:
         required: false
         type: boolean
         default: true
-        description: 'Whether to continue workflow execution if tests fail'
 
 jobs:
-  run-syntestio-tests:
-    name: Run Syntestio Tests
-    runs-on: ${{ inputs.runner || format('{0}-latest', inputs.os == 'win' && 'windows' || inputs.os == 'macos' && 'macos' || 'ubuntu') }}
-    continue-on-error: ${{ inputs.continueOnError }}
+  run-tests:
+    runs-on: ${{ inputs.runner != '' && inputs.runner || format('{0}-latest', inputs.os) }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '18.x'
 
-      - name: Download Test Files
-        uses: actions/download-artifact@v4
-        with:
-          name: test-files
-          path: tests
-
-      - name: Install Syntestio CLI
+      - name: Create artifacts directory
         run: |
-          if [ "${{ inputs.os }}" == "win" ]; then
-            npm install -g @syntestio/cli-win
-          elif [ "${{ inputs.os }}" == "macos" ]; then
-            npm install -g @syntestio/cli-mac
+          mkdir -p ${{ github.workspace }}/${{ inputs.testResultsDir }}
+
+      - name: Copy test files
+        run: |
+          cp ${{ inputs.testConfigFile }} ${{ github.workspace }}/
+          cp $(dirname ${{ inputs.testConfigFile }})/**/*.feature ${{ github.workspace }}/ 2>/dev/null || true
+
+      - name: Install CLI package
+        run: |
+          npm install -g @syntestio/cli-${{ inputs.os }} --verbose
+
+      - name: Run test scenario
+        continue-on-error: ${{ inputs.continueOnError }}
+        run: |
+          # Set UTF-8 encoding
+          export LANG=en_US.UTF-8
+          export LC_ALL=en_US.UTF-8
+
+          echo "Starting test execution..."
+
+          # Run tests and capture output
+          syn --config "${{ github.workspace }}/${{ inputs.testConfigFile }}" ${{ inputs.cliArguments }} 2>&1 | tee syntestio_test_output.log
+          TEST_EXIT_CODE=${PIPESTATUS[0]}
+
+          echo "Test execution completed with exit code: $TEST_EXIT_CODE"
+
+          # Copy test reports to artifacts
+          if ls TestReport_*.html 1> /dev/null 2>&1; then
+            echo "Copying test reports to artifacts directory..."
+            cp TestReport_*.html ${{ github.workspace }}/${{ inputs.testResultsDir }}/
+            cp syntestio_test_output.log ${{ github.workspace }}/${{ inputs.testResultsDir }}/
           else
-            npm install -g @syntestio/cli-linux
+            echo "No test reports found!"
+            echo "::warning::No test reports were generated"
           fi
-        shell: bash
 
-      - name: Create Results Directory
-        run: mkdir -p ${{ inputs.testResultsDir }}
-        shell: bash
+          # Set job status based on test results
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::warning::Tests failed with exit code: $TEST_EXIT_CODE"
+            exit 1
+          else
+            echo "All tests passed successfully"
+          fi
 
-      - name: Run Syntestio Tests
-        run: syntestio run --config-file ${{ inputs.testConfigFile }} --results-dir ${{ inputs.testResultsDir }} ${{ inputs.cliArguments }}
-        shell: bash
-
-      - name: Upload Test Results
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: syntestio-test-reports
-          path: ${{ inputs.testResultsDir }}
+          path: ${{ github.workspace }}/${{ inputs.testResultsDir }}/
