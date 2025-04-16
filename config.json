@@ -4,8 +4,8 @@
     "scenarioFileDirs": [
       "tests"
     ],
-    "isDebug": true,
-    "headless": false,
+    "isDebug": false,
+    "headless": true,
     "saveResult": true,
     "retryWhenFail": 0,
     "tags": []
