@@ -28,15 +28,15 @@ jobs:
         run: |
           # Create the secrets feature file with GitHub secrets
           cat > tests/secrets.feature << EOF
-          @var* userEmail = ${{ secrets.USER_EMAIL }}
-          @var* password = ${{ secrets.PASSWORD }}
-          @var* anotherUserEmail = ${{ secrets.ANOTHER_USER_EMAIL }}
+          @var* userEmail = \${{ secrets.USER_EMAIL }}
+          @var* password = \${{ secrets.PASSWORD }}
+          @var* anotherUserEmail = \${{ secrets.ANOTHER_USER_EMAIL }}
           EOF
 
           # Update config file with API key
           cat > config.json << EOF
           {
-            "apiKey": "${{ secrets.SYNTESTIO_API_KEY }}",
+            "apiKey": "\${{ secrets.SYNTESTIO_API_KEY }}",
             "appUrl": "https://syntestio.com",
             "scenarioFileDirs": ["tests"],
             "isDebug": false,
